@@ -43,6 +43,7 @@ interface MachineContextValue {
   stopConveyor: () => void
   sync: () => Promise<void>
   resetBatch: () => void
+  reconnect: () => void
 }
 
 const MachineContext = createContext<MachineContextValue | null>(null)
@@ -58,10 +59,16 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
   const [isScanningHandheld, setIsScanningHandheld] = useState<boolean>(false)
   const [pendingSync, setPendingSync] = useState(0)
   const [lastSyncCount, setLastSyncCount] = useState<number | null>(null)
+  const [retryTrigger, setRetryTrigger] = useState(0)
 
   const wsRef = useRef<WebSocket | null>(null)
   const modeRef = useRef<Mode | null>(null)
   modeRef.current = mode
+
+  const reconnect = useCallback(() => {
+    setConnection('connecting')
+    setRetryTrigger((prev) => prev + 1)
+  }, [])
 
   const applyScan = useCallback((result: ScanResult) => {
     setScan(result)
@@ -78,41 +85,48 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     void countUnsynced().then(setPendingSync)
   }, [])
 
-  // Establish the WebSocket connection to the ESP32.
+  // Establish the WebSocket connection to the ESP32 with auto-reconnect.
   useEffect(() => {
     let cancelled = false
     let socket: WebSocket | null = null
-    try {
-      socket = new WebSocket(DEFAULT_WS_URL)
-      wsRef.current = socket
-      socket.onopen = () => !cancelled && setConnection('connected')
-      socket.onclose = () => !cancelled && setConnection('offline')
-      socket.onerror = () => !cancelled && setConnection('offline')
-      socket.onmessage = (event) => {
-        const result = parseDataMessage(String(event.data))
-        if (!result) return
 
-        // In handheld mode, animate through phases before showing result
-        if (modeRef.current === 'handheld') {
-          setIsScanningHandheld(true)
-          setHandheldPhase(1)
-          let step = 1
-          const phaseInterval = setInterval(() => {
-            step += 1
-            setHandheldPhase(step)
-            if (step >= 5) {
-              clearInterval(phaseInterval)
-              applyScan(result)
-              setIsScanningHandheld(false)
-            }
-          }, 350)
-        } else {
-          applyScan(result)
+    const connect = () => {
+      if (wsRef.current?.readyState === WebSocket.OPEN) return
+      setConnection('connecting')
+      try {
+        socket = new WebSocket(DEFAULT_WS_URL)
+        wsRef.current = socket
+        socket.onopen = () => !cancelled && setConnection('connected')
+        socket.onclose = () => !cancelled && setConnection('offline')
+        socket.onerror = () => !cancelled && setConnection('offline')
+        socket.onmessage = (event) => {
+          const result = parseDataMessage(String(event.data))
+          if (!result) return
+
+          // In handheld mode, animate through phases before showing result
+          if (modeRef.current === 'handheld') {
+            setIsScanningHandheld(true)
+            setHandheldPhase(1)
+            let step = 1
+            const phaseInterval = setInterval(() => {
+              step += 1
+              setHandheldPhase(step)
+              if (step >= 5) {
+                clearInterval(phaseInterval)
+                applyScan(result)
+                setIsScanningHandheld(false)
+              }
+            }, 350)
+          } else {
+            applyScan(result)
+          }
         }
+      } catch {
+        setConnection('offline')
       }
-    } catch {
-      setConnection('offline')
     }
+
+    connect()
 
     const timeout = setTimeout(() => {
       if (!cancelled && socket && socket.readyState !== WebSocket.OPEN) {
@@ -120,14 +134,21 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
       }
     }, 2500)
 
+    const retryInterval = setInterval(() => {
+      if (!cancelled && (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED)) {
+        connect()
+      }
+    }, 5000)
+
     void countUnsynced().then(setPendingSync)
 
     return () => {
       cancelled = true
       clearTimeout(timeout)
+      clearInterval(retryInterval)
       socket?.close()
     }
-  }, [applyScan])
+  }, [applyScan, retryTrigger])
 
   const sendCommand = useCallback((command: string) => {
     const socket = wsRef.current
@@ -228,6 +249,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
         stopConveyor,
         sync,
         resetBatch,
+        reconnect,
       }}
     >
       {children}
