@@ -36,6 +36,8 @@ interface MachineContextValue {
   isScanningHandheld: boolean
   pendingSync: number
   lastSyncCount: number | null
+  wsIp: string
+  setWsIp: (ip: string) => void
   sendCommand: (command: string) => void
   triggerScan: () => void
   startConveyor: () => void
@@ -59,13 +61,25 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
   const [isScanningHandheld, setIsScanningHandheld] = useState<boolean>(false)
   const [pendingSync, setPendingSync] = useState(0)
   const [lastSyncCount, setLastSyncCount] = useState<number | null>(null)
+  const [wsIp, setWsIpState] = useState<string>('192.168.4.1')
   const [retryTrigger, setRetryTrigger] = useState(0)
 
   const wsRef = useRef<WebSocket | null>(null)
   const modeRef = useRef<Mode | null>(null)
   modeRef.current = mode
 
+  const setWsIp = useCallback((ip: string) => {
+    const cleanIp = ip.trim().replace(/^https?:\/\//, '').replace(/^ws:\/\//, '').replace(/\/.*$/, '')
+    if (cleanIp) {
+      setWsIpState(cleanIp)
+      wsRef.current?.close()
+      setConnection('connecting')
+      setRetryTrigger((prev) => prev + 1)
+    }
+  }, [])
+
   const reconnect = useCallback(() => {
+    wsRef.current?.close()
     setConnection('connecting')
     setRetryTrigger((prev) => prev + 1)
   }, [])
@@ -90,11 +104,13 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false
     let socket: WebSocket | null = null
 
+    const targetUrl = wsIp ? `ws://${wsIp}/ws` : DEFAULT_WS_URL
+
     const connect = () => {
       if (wsRef.current?.readyState === WebSocket.OPEN) return
       setConnection('connecting')
       try {
-        socket = new WebSocket(DEFAULT_WS_URL)
+        socket = new WebSocket(targetUrl)
         wsRef.current = socket
         socket.onopen = () => !cancelled && setConnection('connected')
         socket.onclose = () => !cancelled && setConnection('offline')
@@ -148,7 +164,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
       clearInterval(retryInterval)
       socket?.close()
     }
-  }, [applyScan, retryTrigger])
+  }, [applyScan, retryTrigger, wsIp])
 
   const sendCommand = useCallback((command: string) => {
     const socket = wsRef.current
@@ -242,6 +258,8 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
         isScanningHandheld,
         pendingSync,
         lastSyncCount,
+        wsIp,
+        setWsIp,
         sendCommand,
         triggerScan,
         startConveyor,
