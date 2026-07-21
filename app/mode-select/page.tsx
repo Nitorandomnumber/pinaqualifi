@@ -49,38 +49,38 @@ export default function ModeSelectPage() {
   return (
     <ConsoleShell>
       <BrandHeader />
-      <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-6 bg-white text-black">
-        <h1 className="text-xl font-bold tracking-wide sm:text-2xl text-black">
+      <div className="flex flex-1 flex-col items-center justify-start gap-4 px-4 py-4 sm:py-6 bg-white text-black overflow-y-auto">
+        <h1 className="text-lg font-bold tracking-wide sm:text-2xl text-black">
           SELECT OPERATING MODE
         </h1>
-        <div className="grid w-full max-w-4xl grid-cols-1 gap-6 md:grid-cols-2">
+        <div className="grid w-full max-w-4xl grid-cols-1 gap-4 md:grid-cols-2 pb-6">
           {CARDS.map((card) => {
             const isDisabled = card.mode === 'conveyor'
             return (
               <div
                 key={card.mode}
-                className={`flex flex-col items-center justify-between gap-5 border border-black bg-white px-6 py-6 text-center ${
+                className={`flex flex-col items-center justify-between gap-3 border border-black bg-white px-4 py-4 text-center ${
                   isDisabled ? 'opacity-60 bg-gray-50' : ''
                 }`}
               >
                 <div>
-                  <h2 className="text-lg font-bold sm:text-xl text-black">
+                  <h2 className="text-base font-bold sm:text-xl text-black">
                     {card.title}
                   </h2>
                   {card.subtitle ? (
-                    <p className="text-base font-bold sm:text-lg text-black">
+                    <p className="text-sm font-bold sm:text-base text-black">
                       {card.subtitle}
                     </p>
                   ) : null}
                   {isDisabled ? (
-                    <span className="inline-block mt-1 text-xs font-bold uppercase tracking-wider text-red-600 bg-red-50 border border-red-200 px-2 py-0.5">
+                    <span className="inline-block mt-0.5 text-xs font-bold uppercase tracking-wider text-red-600 bg-red-50 border border-red-200 px-2 py-0.5">
                       Unavailable for Presentation
                     </span>
                   ) : null}
                 </div>
-                <ul className="w-full space-y-2 text-left text-base sm:text-lg text-black">
+                <ul className="w-full space-y-1.5 text-left text-xs sm:text-sm text-black">
                   {card.bullets.map((b) => (
-                    <li key={b} className="flex gap-2 items-start">
+                    <li key={b} className="flex gap-1.5 items-start">
                       <span aria-hidden="true">&middot;</span>
                       <span>{b}</span>
                     </li>
@@ -90,6 +90,7 @@ export default function ModeSelectPage() {
                   variant={isDisabled ? 'warning' : 'success'}
                   disabled={isDisabled}
                   onClick={() => select(card)}
+                  className="w-full sm:w-auto"
                 >
                   {isDisabled ? '[ Mode Disabled ]' : '[ Select Mode ]'}
                 </ConsoleButton>

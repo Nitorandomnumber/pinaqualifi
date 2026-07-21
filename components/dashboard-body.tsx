@@ -7,12 +7,12 @@ export function DashboardBody({
   scanFooter,
 }: {
   scanTitle: string
-  scanStatus: string
+  scanStatus?: string
   scanFooter?: React.ReactNode
 }) {
   return (
     <div className="grid flex-1 grid-cols-1 md:grid-cols-2 bg-white text-black overflow-y-auto">
-      <div className="flex flex-col justify-center border-b border-black px-8 py-4 md:border-b-0 md:border-r border-black">
+      <div className="flex flex-col justify-center border-b border-black px-4 py-3 md:border-b-0 md:border-r border-black">
         <div className="mx-auto w-full max-w-lg">
           <ScanResultBox
             title={scanTitle}
@@ -21,7 +21,7 @@ export function DashboardBody({
           />
         </div>
       </div>
-      <div className="flex flex-col justify-center px-8 py-4">
+      <div className="flex flex-col justify-center px-4 py-3">
         <div className="mx-auto w-full max-w-md">
           <BatchCounterBox />
         </div>

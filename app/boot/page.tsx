@@ -45,11 +45,11 @@ function BootContent() {
   }
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-6 bg-white text-black">
-      <p className="text-lg italic sm:text-xl text-black">
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-4 sm:py-6 bg-white text-black overflow-y-auto">
+      <p className="text-base italic sm:text-xl text-black">
         {'{ Checking sensors and motor relays... }'}
       </p>
-      <div className="w-full max-w-xl border border-black bg-white px-6 py-5">
+      <div className="w-full max-w-xl border border-black bg-white px-5 py-4">
         <InfoRow
           label={CHECKS[0]}
           value={
