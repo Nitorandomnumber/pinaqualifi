@@ -17,6 +17,11 @@ export const metadata: Metadata = {
     'Piña-QualiFi: An Automated Quality Assessment and Grading System for Queen Pineapple Fiber.',
   generator: 'v0.app',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.png',
+    shortcut: '/icon.png',
+    apple: '/apple-icon.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
