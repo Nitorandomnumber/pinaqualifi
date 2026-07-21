@@ -28,10 +28,10 @@ export function FullscreenToggle() {
   return (
     <button
       onClick={toggleFullscreen}
-      className="inline-flex select-none items-center justify-center border border-black bg-white px-2.5 py-1 text-xs font-bold uppercase tracking-wider text-black hover:bg-gray-100 active:bg-gray-200"
+      className="inline-flex select-none items-center justify-center border border-black bg-white px-2 py-0.5 text-xs font-bold text-black hover:bg-gray-100"
       title="Toggle Fullscreen Mode"
     >
-      {isFullscreen ? 'Exit Fullscreen' : '⛶ Fullscreen'}
+      {isFullscreen ? '[ ⛶ Exit ]' : '[ ⛶ Fullscreen ]'}
     </button>
   )
 }
