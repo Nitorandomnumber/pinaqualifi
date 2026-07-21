@@ -17,24 +17,36 @@ const CHECKS = [
 function BootContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { mode: contextMode } = useMachine()
+  const { mode: contextMode, connection, sensorCheck, sendCommand } = useMachine()
   const activeMode = searchParams.get('mode') || contextMode || 'conveyor'
   const isHandheld = activeMode === 'handheld'
 
   const [ready, setReady] = useState<boolean[]>(CHECKS.map(() => false))
 
+  // Request live diagnostic check from ESP32 on mount
   useEffect(() => {
-    const timers = CHECKS.map((_, i) =>
-      setTimeout(
-        () => setReady((prev) => prev.map((v, idx) => (idx === i ? true : v))),
-        400 + i * 500,
-      ),
-    )
-    return () => timers.forEach(clearTimeout)
-  }, [])
+    if (connection === 'connected') {
+      sendCommand('CHECK_SENSORS')
+    }
+  }, [connection, sendCommand])
+
+  // Fallback timer or live check update
+  useEffect(() => {
+    if (sensorCheck) {
+      setReady([sensorCheck.color, sensorCheck.ir, sensorCheck.relays])
+    } else {
+      const timers = CHECKS.map((_, i) =>
+        setTimeout(
+          () => setReady((prev) => prev.map((v, idx) => (idx === i ? true : v))),
+          400 + i * 500,
+        ),
+      )
+      return () => timers.forEach(clearTimeout)
+    }
+  }, [sensorCheck])
 
   // In Handheld mode, Actuators & 12V Relays are off-scope / bypassed on battery
-  const allDone = ready[0] && ready[1] && ready[2]
+  const allDone = ready[0] && ready[1] && (isHandheld || ready[2])
 
   const handleProceed = () => {
     if (isHandheld) {
@@ -54,7 +66,7 @@ function BootContent() {
           label={CHECKS[0]}
           value={
             <span className={ready[0] ? 'text-green-700 font-bold' : 'text-gray-500'}>
-              {ready[0] ? 'Ready' : '...'}
+              {ready[0] ? 'Ready' : 'Checking...'}
             </span>
           }
         />
@@ -62,21 +74,19 @@ function BootContent() {
           label={CHECKS[1]}
           value={
             <span className={ready[1] ? 'text-green-700 font-bold' : 'text-gray-500'}>
-              {ready[1] ? 'Ready' : '...'}
+              {ready[1] ? 'Ready' : 'Checking...'}
             </span>
           }
         />
         <InfoRow
           label={CHECKS[2]}
           value={
-            ready[2] ? (
-              isHandheld ? (
-                <span className="text-gray-500 font-bold">Disabled (Bypassed)</span>
-              ) : (
-                <span className="text-green-700 font-bold">Ready</span>
-              )
+            isHandheld ? (
+              <span className="text-gray-500 font-bold">Disabled (Bypassed)</span>
+            ) : ready[2] ? (
+              <span className="text-green-700 font-bold">Ready</span>
             ) : (
-              <span className="text-gray-500">...</span>
+              <span className="text-gray-500">Checking...</span>
             )
           }
         />

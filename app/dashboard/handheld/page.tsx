@@ -43,14 +43,25 @@ function HandheldPhases() {
 }
 
 function IdentifierStatus() {
-  const { connection, isScanningHandheld, handheldPhase } = useMachine()
+  const { connection, isScanningHandheld, scannerState, handheldPhase } = useMachine()
   const isConnected = connection === 'connected'
 
-  if (isScanningHandheld) {
+  if (scannerState === 'paused') {
+    return (
+      <div className="flex items-center gap-2 text-xs sm:text-sm text-black">
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-yellow-500 animate-pulse flex-shrink-0" />
+        <span className="font-bold text-yellow-700">
+          Scanner PAUSED — Press scanner button to RESUME or tap [ END BATCH ]
+        </span>
+      </div>
+    )
+  }
+
+  if (isScanningHandheld || scannerState === 'scanning') {
     return (
       <div className="flex items-center gap-2 text-xs sm:text-sm text-black">
         <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600 animate-pulse flex-shrink-0" />
-        <span className="font-bold">Scanning fiber sample...</span>
+        <span className="font-bold">Scanning active — press scanner button to PAUSE</span>
       </div>
     )
   }
@@ -59,7 +70,7 @@ function IdentifierStatus() {
     return (
       <div className="flex items-center gap-2 text-xs sm:text-sm text-black">
         <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600 flex-shrink-0" />
-        <span>Scan complete — place next sample when Blue LED turns ON</span>
+        <span>Scan complete — press scanner button for next sample</span>
       </div>
     )
   }
@@ -69,8 +80,8 @@ function IdentifierStatus() {
       <span className={`inline-block h-2.5 w-2.5 rounded-full flex-shrink-0 ${isConnected ? 'bg-blue-600 animate-pulse' : 'bg-gray-400'}`} />
       <span className="truncate">
         {isConnected
-          ? 'Waiting for Blue LED identifier — place fiber under TCS3200 / IR array'
-          : 'Offline — waiting for ESP32 connection at ws://192.168.4.1/ws'}
+          ? 'Press scanner button to START scanning | Blue LED active'
+          : 'Offline — waiting for ESP32 connection'}
       </span>
     </div>
   )

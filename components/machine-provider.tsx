@@ -14,8 +14,11 @@ import {
   EMPTY_SCAN,
   type BatchCounters,
   type ScanResult,
+  type SensorCheckResult,
   counterKeyForGrade,
   parseDataMessage,
+  parseSensorCheckMessage,
+  parseScannerStateMessage,
   simulateScan,
 } from '@/lib/machine'
 import { addScan, countUnsynced, markAllSynced } from '@/lib/idb'
@@ -23,6 +26,7 @@ import { addScan, countUnsynced, markAllSynced } from '@/lib/idb'
 export type Mode = 'conveyor' | 'handheld'
 export type ConnectionStatus = 'connecting' | 'connected' | 'offline'
 export type ConveyorState = 'idle' | 'running' | 'paused'
+export type ScannerState = 'idle' | 'scanning' | 'paused'
 
 interface MachineContextValue {
   mode: Mode | null
@@ -38,6 +42,9 @@ interface MachineContextValue {
   lastSyncCount: number | null
   wsIp: string
   setWsIp: (ip: string) => void
+  sensorCheck: SensorCheckResult | null
+  scannerState: ScannerState
+  toggleScannerPause: () => void
   sendCommand: (command: string) => void
   triggerScan: () => void
   startConveyor: () => void
@@ -63,6 +70,8 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
   const [lastSyncCount, setLastSyncCount] = useState<number | null>(null)
   const [wsIp, setWsIpState] = useState<string>('192.168.4.1')
   const [retryTrigger, setRetryTrigger] = useState(0)
+  const [sensorCheck, setSensorCheck] = useState<SensorCheckResult | null>(null)
+  const [scannerState, setScannerState] = useState<ScannerState>('idle')
 
   const wsRef = useRef<WebSocket | null>(null)
   const modeRef = useRef<Mode | null>(null)
@@ -83,6 +92,23 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     setConnection('connecting')
     setRetryTrigger((prev) => prev + 1)
   }, [])
+
+  const sendCommand = useCallback((command: string) => {
+    const socket = wsRef.current
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(command)
+    }
+  }, [])
+
+  const toggleScannerPause = useCallback(() => {
+    if (scannerState === 'scanning') {
+      sendCommand('PAUSE_SCANNER')
+      setScannerState('paused')
+    } else if (scannerState === 'paused') {
+      sendCommand('RESUME_SCANNER')
+      setScannerState('scanning')
+    }
+  }, [scannerState, sendCommand])
 
   const applyScan = useCallback((result: ScanResult) => {
     setScan(result)
@@ -112,17 +138,40 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
       try {
         socket = new WebSocket(targetUrl)
         wsRef.current = socket
-        socket.onopen = () => !cancelled && setConnection('connected')
+        socket.onopen = () => {
+          if (!cancelled) {
+            setConnection('connected')
+            // Request diagnostic sensor check from ESP32 on connect
+            socket?.send('CHECK_SENSORS')
+          }
+        }
         socket.onclose = () => !cancelled && setConnection('offline')
         socket.onerror = () => !cancelled && setConnection('offline')
         socket.onmessage = (event) => {
-          const result = parseDataMessage(String(event.data))
+          const raw = String(event.data)
+
+          // Check if it's a real sensor check from ESP32
+          const check = parseSensorCheckMessage(raw)
+          if (check) {
+            setSensorCheck(check)
+            return
+          }
+
+          // Check if it's a scanner state update
+          const state = parseScannerStateMessage(raw)
+          if (state) {
+            setScannerState(state)
+            return
+          }
+
+          const result = parseDataMessage(raw)
           if (!result) return
 
           // In handheld mode, animate through phases before showing result
           if (modeRef.current === 'handheld') {
             setIsScanningHandheld(true)
             setHandheldPhase(1)
+            setScannerState('scanning')
             let step = 1
             const phaseInterval = setInterval(() => {
               step += 1
@@ -131,6 +180,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
                 clearInterval(phaseInterval)
                 applyScan(result)
                 setIsScanningHandheld(false)
+                setScannerState('idle')
               }
             }, 350)
           } else {
@@ -166,13 +216,6 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     }
   }, [applyScan, retryTrigger, wsIp])
 
-  const sendCommand = useCallback((command: string) => {
-    const socket = wsRef.current
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(command)
-    }
-  }, [])
-
   const triggerScan = useCallback(() => {
     sendCommand('TRIGGER_SCAN')
     if (wsRef.current?.readyState === WebSocket.OPEN) return
@@ -180,6 +223,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     if (isScanningHandheld) return
     setIsScanningHandheld(true)
     setHandheldPhase(1)
+    setScannerState('scanning')
 
     let current = 1
     const interval = setInterval(() => {
@@ -189,6 +233,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
         clearInterval(interval)
         applyScan(simulateScan())
         setIsScanningHandheld(false)
+        setScannerState('idle')
       }
     }, 450)
   }, [sendCommand, applyScan, isScanningHandheld])
@@ -241,6 +286,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     setActivePhase(4)
     setHandheldPhase(0)
     setIsScanningHandheld(false)
+    setScannerState('idle')
     setLastSyncCount(null)
   }, [])
 
@@ -260,6 +306,9 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
         lastSyncCount,
         wsIp,
         setWsIp,
+        sensorCheck,
+        scannerState,
+        toggleScannerPause,
         sendCommand,
         triggerScan,
         startConveyor,

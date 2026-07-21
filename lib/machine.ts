@@ -52,6 +52,42 @@ export const EMPTY_COUNTERS: BatchCounters = {
 
 export const DEFAULT_WS_URL = 'ws://192.168.4.1/ws'
 
+export interface SensorCheckResult {
+  color: boolean
+  ir: boolean
+  relays: boolean
+}
+
+export function parseSensorCheckMessage(raw: string): SensorCheckResult | null {
+  const parts = raw.trim().split('|')
+  if (parts.length === 0 || parts[0].toUpperCase() !== 'SENSOR_CHECK') return null
+
+  const map: Record<string, string> = {}
+  for (const segment of parts.slice(1)) {
+    const idx = segment.indexOf(':')
+    if (idx === -1) continue
+    const key = segment.slice(0, idx).trim().toLowerCase()
+    const value = segment.slice(idx + 1).trim()
+    map[key] = value
+  }
+
+  return {
+    color: map['color'] === '1' || map['color'] === 'true' || map['tcs3200'] === '1',
+    ir: map['ir'] === '1' || map['ir'] === 'true',
+    relays: map['relays'] === '1' || map['relays'] === 'true',
+  }
+}
+
+export function parseScannerStateMessage(raw: string): 'idle' | 'scanning' | 'paused' | null {
+  const parts = raw.trim().split('|')
+  if (parts.length === 0 || parts[0].toUpperCase() !== 'SCAN_STATE') return null
+  const state = (parts[1] ?? '').toLowerCase()
+  if (state === 'scanning' || state === 'paused' || state === 'idle') {
+    return state as 'idle' | 'scanning' | 'paused'
+  }
+  return null
+}
+
 /**
  * Parse a raw pipe-delimited WebSocket message.
  * Example: DATA|Score:88.54%|Grade:PID-1|Clean:FAIR|Texture:SOFT
