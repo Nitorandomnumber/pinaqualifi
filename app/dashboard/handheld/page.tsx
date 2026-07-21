@@ -11,8 +11,8 @@ function HandheldPhases() {
   const { handheldPhase, isScanningHandheld } = useMachine()
 
   return (
-    <div className="flex flex-col gap-0.5 text-xs sm:text-sm text-black mt-2">
-      <h3 className="font-bold text-xs uppercase tracking-wider text-black mb-1">
+    <div className="flex flex-col gap-0.5 text-xs text-black mt-1.5">
+      <h3 className="font-bold text-xs uppercase tracking-wider text-black mb-0.5">
         HANDHELD SCANNING PHASES
       </h3>
       {HANDHELD_PHASES.map((p) => {
@@ -48,8 +48,8 @@ function IdentifierStatus() {
 
   if (isScanningHandheld) {
     return (
-      <div className="flex items-center gap-3 text-sm sm:text-base text-black">
-        <span className="inline-block h-3 w-3 rounded-full bg-green-600 animate-pulse" />
+      <div className="flex items-center gap-2 text-xs sm:text-sm text-black">
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600 animate-pulse flex-shrink-0" />
         <span className="font-bold">Scanning fiber sample...</span>
       </div>
     )
@@ -57,17 +57,17 @@ function IdentifierStatus() {
 
   if (handheldPhase >= 5) {
     return (
-      <div className="flex items-center gap-3 text-sm sm:text-base text-black">
-        <span className="inline-block h-3 w-3 rounded-full bg-green-600" />
+      <div className="flex items-center gap-2 text-xs sm:text-sm text-black">
+        <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600 flex-shrink-0" />
         <span>Scan complete — place next sample when Blue LED turns ON</span>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center gap-3 text-sm sm:text-base text-black">
-      <span className={`inline-block h-3 w-3 rounded-full ${isConnected ? 'bg-blue-600 animate-pulse' : 'bg-gray-400'}`} />
-      <span>
+    <div className="flex items-center gap-2 text-xs sm:text-sm text-black">
+      <span className={`inline-block h-2.5 w-2.5 rounded-full flex-shrink-0 ${isConnected ? 'bg-blue-600 animate-pulse' : 'bg-gray-400'}`} />
+      <span className="truncate">
         {isConnected
           ? 'Waiting for Blue LED identifier — place fiber under TCS3200 / IR array'
           : 'Offline — waiting for ESP32 connection at ws://192.168.4.1/ws'}
@@ -84,9 +84,9 @@ export default function HandheldDashboard() {
         scanTitle="HANDHELD SCAN RESULT"
         scanFooter={<HandheldPhases />}
       />
-      <footer className="flex items-center gap-3 border-t border-black px-6 py-3 bg-white text-black">
+      <footer className="flex items-center gap-2 border-t border-black px-4 py-2 bg-white text-black">
         <IdentifierStatus />
-        <div className="ml-auto">
+        <div className="ml-auto flex-shrink-0">
           <EndBatchButton />
         </div>
       </footer>

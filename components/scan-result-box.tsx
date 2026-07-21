@@ -19,15 +19,15 @@ export function ScanResultBox({
   const texture =
     scan.texture === '----' ? '----' : formatTexture(scan.texture)
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-bold tracking-wide sm:text-xl">{title}</h2>
-      <div className="border border-black px-5 py-4 bg-white">
+    <section className="flex flex-col gap-2">
+      <h2 className="text-sm font-bold tracking-wide sm:text-base text-black uppercase">{title}</h2>
+      <div className="border border-black px-4 py-2.5 bg-white">
         <InfoRow label="Classification Grade" value={scan.grade} />
         <InfoRow label="Quality Score" value={scan.score} />
         <InfoRow label="Cleanliness Level" value={cleanliness} />
         <InfoRow label="Surface Texture" value={texture} />
       </div>
-      {status ? <p className="text-base sm:text-lg">Status: {status}</p> : null}
+      {status ? <p className="text-xs sm:text-sm text-black">Status: {status}</p> : null}
       {footer}
     </section>
   )

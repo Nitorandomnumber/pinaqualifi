@@ -36,15 +36,16 @@ export function DashboardHeader({ modeLabel }: { modeLabel: string }) {
 
   return (
     <>
-      <header className="grid grid-cols-3 items-center border-b border-black px-6 py-3 bg-white text-black">
-        <span className="text-base sm:text-lg">Time: {time}</span>
-        <span className="text-center text-base font-bold sm:text-lg">
+      <header className="grid grid-cols-3 items-center border-b border-black px-4 py-1.5 bg-white text-black">
+        <span className="text-xs sm:text-sm">Time: {time}</span>
+        <span className="text-center text-xs font-bold sm:text-sm">
           Mode: {modeLabel}
         </span>
-        <div className="flex justify-end gap-3 items-center">
+        <div className="flex justify-end gap-2 items-center">
           <FullscreenToggle />
           <ConsoleButton
             variant="success"
+            className="py-1 px-2.5 text-xs"
             onClick={() => setShowConfirmSwitch(true)}
           >
             [ Switch Mode ]

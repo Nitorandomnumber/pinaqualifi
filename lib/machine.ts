@@ -29,11 +29,11 @@ export const CONVEYOR_PHASES: SensorPhase[] = [
 ]
 
 export const HANDHELD_PHASES: SensorPhase[] = [
-  { id: 1, label: 'Phase 1: Sample Positioned under TCS3200 & IR Array' },
-  { id: 2, label: 'Phase 2: Calibrating RGB Light & Analog IR Sensors' },
-  { id: 3, label: 'Phase 3: Reading Color Frequencies & Texture Relay' },
-  { id: 4, label: 'Phase 4: Evaluating PNS/BAFS 318:2021 Quality Matrix' },
-  { id: 5, label: 'Phase 5: Scan Completed & Logged to Batch' },
+  { id: 1, label: 'Phase 1: Positioned under TCS3200 / IR' },
+  { id: 2, label: 'Phase 2: Calibrating RGB & Analog IR' },
+  { id: 3, label: 'Phase 3: Reading Color & Texture' },
+  { id: 4, label: 'Phase 4: Evaluating PNS 318:2021' },
+  { id: 5, label: 'Phase 5: Scan Completed & Logged' },
 ]
 
 export const EMPTY_SCAN: ScanResult = {
