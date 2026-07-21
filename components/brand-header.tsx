@@ -8,9 +8,9 @@ export function BrandHeader() {
         <Image
           src="/logo.png"
           alt="Piña-QualiFi"
-          width={180}
-          height={50}
-          className="h-9 w-auto object-contain"
+          width={220}
+          height={65}
+          className="h-10 sm:h-12 w-auto object-contain"
           priority
         />
       </div>
