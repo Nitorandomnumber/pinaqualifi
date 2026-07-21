@@ -12,15 +12,15 @@ const ptSerif = PT_Serif({
 })
 
 export const metadata: Metadata = {
-  title: 'PINAQUALIFI — Abaca Fiber Grading Console',
+  title: 'Piña-QualiFi — Queen Pineapple Fiber Assessment Console',
   description:
-    'Offline-first command console for the ESP32-based Abaca Fiber Grading Machine.',
+    'Piña-QualiFi: An Automated Quality Assessment and Grading System for Queen Pineapple Fiber.',
   generator: 'v0.app',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'PINAQUALIFI',
+    title: 'Piña-QualiFi',
   },
 }
 

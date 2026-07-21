@@ -1,7 +1,7 @@
 {
-  "name": "PINAQUALIFI — Abaca Fiber Grading Console",
-  "short_name": "PINAQUALIFI",
-  "description": "Offline-first command console for the ESP32-based Abaca Fiber Grading Machine.",
+  "name": "Piña-QualiFi: Queen Pineapple Fiber Assessment Console",
+  "short_name": "Piña-QualiFi",
+  "description": "Piña-QualiFi: An Automated Quality Assessment and Grading System for Queen Pineapple Fiber.",
   "start_url": "/boot",
   "display": "standalone",
   "orientation": "landscape",
