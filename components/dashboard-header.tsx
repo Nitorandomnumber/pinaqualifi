@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ConsoleButton } from '@/components/console-button'
 import { ConfirmModal } from '@/components/confirm-modal'
+import { FullscreenToggle } from '@/components/fullscreen-toggle'
 import { useMachine } from '@/components/machine-provider'
 
 export function DashboardHeader({ modeLabel }: { modeLabel: string }) {
@@ -40,7 +41,8 @@ export function DashboardHeader({ modeLabel }: { modeLabel: string }) {
         <span className="text-center text-base font-bold sm:text-lg">
           Mode: {modeLabel}
         </span>
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-3 items-center">
+          <FullscreenToggle />
           <ConsoleButton
             variant="success"
             onClick={() => setShowConfirmSwitch(true)}

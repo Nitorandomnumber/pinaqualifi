@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import { ConnectionStatus } from '@/components/connection-status'
+import { FullscreenToggle } from '@/components/fullscreen-toggle'
 
 export function BrandHeader() {
   return (
@@ -14,7 +15,10 @@ export function BrandHeader() {
           priority
         />
       </div>
-      <ConnectionStatus />
+      <div className="flex items-center gap-4">
+        <FullscreenToggle />
+        <ConnectionStatus />
+      </div>
     </header>
   )
 }
