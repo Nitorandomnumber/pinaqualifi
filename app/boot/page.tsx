@@ -21,27 +21,19 @@ function BootContent() {
   const activeMode = searchParams.get('mode') || contextMode || 'conveyor'
   const isHandheld = activeMode === 'handheld'
 
-  const [ready, setReady] = useState<boolean[]>(CHECKS.map(() => false))
+  const [ready, setReady] = useState<boolean[]>([false, false, false])
 
-  // Request live diagnostic check from ESP32 on mount
+  // Request live diagnostic check from ESP32 on mount and connection
   useEffect(() => {
     if (connection === 'connected') {
       sendCommand('CHECK_SENSORS')
     }
   }, [connection, sendCommand])
 
-  // Fallback timer or live check update
+  // Update live sensor states strictly from ESP32 responses
   useEffect(() => {
     if (sensorCheck) {
       setReady([sensorCheck.color, sensorCheck.ir, sensorCheck.relays])
-    } else {
-      const timers = CHECKS.map((_, i) =>
-        setTimeout(
-          () => setReady((prev) => prev.map((v, idx) => (idx === i ? true : v))),
-          400 + i * 500,
-        ),
-      )
-      return () => timers.forEach(clearTimeout)
     }
   }, [sensorCheck])
 
@@ -59,23 +51,31 @@ function BootContent() {
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 py-4 sm:py-6 bg-white text-black overflow-y-auto">
       <p className="text-base italic sm:text-xl text-black">
-        {'{ Checking sensors and motor relays... }'}
+        {'{ Checking live hardware sensors... }'}
       </p>
       <div className="w-full max-w-xl border border-black bg-white px-5 py-4">
         <InfoRow
           label={CHECKS[0]}
           value={
-            <span className={ready[0] ? 'text-green-700 font-bold' : 'text-gray-500'}>
-              {ready[0] ? 'Ready' : 'Checking...'}
-            </span>
+            connection !== 'connected' ? (
+              <span className="text-red-600 font-bold">ESP32 Offline</span>
+            ) : ready[0] ? (
+              <span className="text-green-700 font-bold">Ready</span>
+            ) : (
+              <span className="text-red-600 font-bold">Not Found / Unplugged</span>
+            )
           }
         />
         <InfoRow
           label={CHECKS[1]}
           value={
-            <span className={ready[1] ? 'text-green-700 font-bold' : 'text-gray-500'}>
-              {ready[1] ? 'Ready' : 'Checking...'}
-            </span>
+            connection !== 'connected' ? (
+              <span className="text-red-600 font-bold">ESP32 Offline</span>
+            ) : ready[1] ? (
+              <span className="text-green-700 font-bold">Ready</span>
+            ) : (
+              <span className="text-red-600 font-bold">Not Found / Unplugged</span>
+            )
           }
         />
         <InfoRow
@@ -83,10 +83,12 @@ function BootContent() {
           value={
             isHandheld ? (
               <span className="text-gray-500 font-bold">Disabled (Bypassed)</span>
+            ) : connection !== 'connected' ? (
+              <span className="text-red-600 font-bold">ESP32 Offline</span>
             ) : ready[2] ? (
               <span className="text-green-700 font-bold">Ready</span>
             ) : (
-              <span className="text-gray-500">Checking...</span>
+              <span className="text-red-600 font-bold">Not Found</span>
             )
           }
         />
