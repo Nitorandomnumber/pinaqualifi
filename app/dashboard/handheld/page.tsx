@@ -61,7 +61,11 @@ function IdentifierStatus() {
     return (
       <div className="flex items-center gap-2 text-xs sm:text-sm text-black">
         <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-600 animate-pulse flex-shrink-0" />
-        <span className="font-bold">Scanning active — press scanner button to PAUSE</span>
+        <span className="font-bold">
+          {isScanningHandheld
+            ? 'Analyzing fiber sample... Please hold still'
+            : 'Preparing next scan — Position next fiber sample | Press button to PAUSE'}
+        </span>
       </div>
     )
   }
