@@ -88,12 +88,26 @@ function IdentifierStatus() {
 }
 
 export default function HandheldDashboard() {
+  const { triggerScan, connection } = useMachine()
+  const isConnected = connection === 'connected'
+
   return (
     <ConsoleShell>
       <DashboardHeader modeLabel="Handheld Mode" />
       <DashboardBody
         scanTitle="HANDHELD SCAN RESULT"
-        scanFooter={<HandheldPhases />}
+        scanFooter={
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={triggerScan}
+              disabled={!isConnected}
+              className="w-full py-2.5 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-green-700 text-white hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider"
+            >
+              [ Run Optical Scan Now ]
+            </button>
+            <HandheldPhases />
+          </div>
+        }
       />
       <footer className="flex items-center gap-2 border-t border-black px-4 py-2 bg-white text-black">
         <IdentifierStatus />
