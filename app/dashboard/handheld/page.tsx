@@ -88,7 +88,14 @@ function IdentifierStatus() {
 }
 
 export default function HandheldDashboard() {
-  const { triggerScan, connection } = useMachine()
+  const { 
+    triggerScan, 
+    connection, 
+    scannerState, 
+    isScanningHandheld, 
+    handheldPhase, 
+    toggleScannerPause 
+  } = useMachine()
   const isConnected = connection === 'connected'
 
   return (
@@ -109,6 +116,50 @@ export default function HandheldDashboard() {
           </div>
         }
       />
+
+      {/* ⚠️ HIGH-VISIBILITY PAUSE OVERLAY */}
+      {scannerState === 'paused' && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm border-4 border-yellow-500 bg-white p-6 shadow-2xl text-center flex flex-col gap-4 text-black">
+            <div className="bg-yellow-500 text-black py-1 font-bold uppercase tracking-wider text-xs sm:text-sm">
+              ⚠️ SCANNING PAUSED
+            </div>
+            <p className="text-xs text-gray-700 font-bold uppercase">
+              The optical scan sequence has been paused.
+            </p>
+            <button
+              onClick={toggleScannerPause}
+              className="w-full py-2 text-xs font-bold border-2 border-black bg-black text-white hover:bg-gray-900 uppercase tracking-wide"
+            >
+              [ Resume Scanning ]
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 🟢 HIGH-VISIBILITY ACTIVE SCAN OVERLAY */}
+      {isScanningHandheld && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm border-4 border-green-600 bg-white p-6 shadow-2xl text-center flex flex-col gap-4 text-black">
+            <div className="bg-green-600 text-white py-1 font-bold uppercase tracking-wider text-xs sm:text-sm animate-pulse">
+              🔍 OPTICAL SCAN IN PROGRESS
+            </div>
+            <div className="text-[11px] sm:text-xs text-gray-800 font-bold uppercase border border-black p-3 bg-gray-50 flex flex-col gap-1.5">
+              <span>Active Phase:</span>
+              <span className="text-xs sm:text-sm text-green-700 font-mono">
+                {HANDHELD_PHASES.find(p => p.id === handheldPhase)?.label || "Analyzing..."}
+              </span>
+            </div>
+            <button
+              onClick={toggleScannerPause}
+              className="w-full py-2 text-xs font-bold border-2 border-black bg-yellow-500 text-black hover:bg-yellow-600 uppercase tracking-wide"
+            >
+              [ Pause Scan ]
+            </button>
+          </div>
+        </div>
+      )}
+
       <footer className="flex items-center gap-2 border-t border-black px-4 py-2 bg-white text-black">
         <IdentifierStatus />
         <div className="ml-auto flex-shrink-0">

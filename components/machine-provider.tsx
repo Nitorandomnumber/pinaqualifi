@@ -76,6 +76,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
   const wsRef = useRef<WebSocket | null>(null)
   const modeRef = useRef<Mode | null>(null)
   modeRef.current = mode
+  const pendingScanResult = useRef<ScanResult | null>(null)
 
   const setWsIp = useCallback((ip: string) => {
     const cleanIp = ip.trim().replace(/^https?:\/\//, '').replace(/^ws:\/\//, '').replace(/\/.*$/, '')
@@ -169,20 +170,10 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
 
           // In handheld mode, animate through phases before showing result
           if (modeRef.current === 'handheld') {
+            pendingScanResult.current = result
             setIsScanningHandheld(true)
             setHandheldPhase(1)
             setScannerState('scanning')
-            let step = 1
-            const phaseInterval = setInterval(() => {
-              step += 1
-              setHandheldPhase(step)
-              if (step >= 5) {
-                clearInterval(phaseInterval)
-                applyScan(result)
-                setIsScanningHandheld(false)
-                setScannerState('idle')
-              }
-            }, 350)
           } else {
             applyScan(result)
           }
@@ -216,27 +207,40 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     }
   }, [applyScan, retryTrigger, wsIp])
 
+  // Handle the handheld mode scanning phase animation.
+  // Slowed down to 1000ms per phase, and pauses/resumes automatically when scannerState changes.
+  useEffect(() => {
+    if (mode !== 'handheld' || scannerState !== 'scanning' || !isScanningHandheld) return
+    if (handheldPhase <= 0 || handheldPhase >= 5) return
+
+    const timer = setTimeout(() => {
+      setHandheldPhase((prev) => {
+        const next = prev + 1
+        if (next >= 5) {
+          if (pendingScanResult.current) {
+            applyScan(pendingScanResult.current)
+            pendingScanResult.current = null
+          }
+          setIsScanningHandheld(false)
+          setScannerState('idle')
+        }
+        return next
+      })
+    }, 1000) // 1 second per phase
+
+    return () => clearTimeout(timer)
+  }, [handheldPhase, scannerState, mode, isScanningHandheld, applyScan])
+
   const triggerScan = useCallback(() => {
     sendCommand('TRIGGER_SCAN')
     if (wsRef.current?.readyState === WebSocket.OPEN) return
 
     if (isScanningHandheld) return
+    pendingScanResult.current = simulateScan()
     setIsScanningHandheld(true)
     setHandheldPhase(1)
     setScannerState('scanning')
-
-    let current = 1
-    const interval = setInterval(() => {
-      current += 1
-      setHandheldPhase(current)
-      if (current >= 5) {
-        clearInterval(interval)
-        applyScan(simulateScan())
-        setIsScanningHandheld(false)
-        setScannerState('idle')
-      }
-    }, 450)
-  }, [sendCommand, applyScan, isScanningHandheld])
+  }, [sendCommand, isScanningHandheld])
 
   const startConveyor = useCallback(() => {
     sendCommand('START_CONVEYOR')
