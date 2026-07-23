@@ -98,7 +98,10 @@ export default function HandheldDashboard() {
     scannerState, 
     isScanningHandheld, 
     handheldPhase, 
-    toggleScannerPause 
+    toggleScannerPause,
+    isCalibrating,
+    calibrationProgress,
+    startCalibration
   } = useMachine()
   const isConnected = connection === 'connected'
 
@@ -109,13 +112,22 @@ export default function HandheldDashboard() {
         scanTitle="HANDHELD SCAN RESULT"
         scanFooter={
           <div className="flex flex-col gap-3">
-            <button
-              onClick={triggerScan}
-              disabled={!isConnected}
-              className="w-full py-2.5 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-green-700 text-white hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider"
-            >
-              [ Run Optical Scan Now ]
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={triggerScan}
+                disabled={!isConnected || isCalibrating}
+                className="flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-green-700 text-white hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider"
+              >
+                [ Run Optical Scan Now ]
+              </button>
+              <button
+                onClick={startCalibration}
+                disabled={!isConnected || scannerState === 'scanning' || isCalibrating}
+                className="flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider"
+              >
+                [ Calibrate (60s) ]
+              </button>
+            </div>
             <HandheldPhases />
           </div>
         }
@@ -183,6 +195,34 @@ export default function HandheldDashboard() {
             >
               [ Pause Scanner ]
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ⚙️ HIGH-VISIBILITY CALIBRATION OVERLAY */}
+      {isCalibrating && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm border-4 border-blue-600 bg-white p-6 shadow-2xl text-center flex flex-col gap-4 text-black">
+            <div className="bg-blue-600 text-white py-1 font-bold uppercase tracking-wider text-xs sm:text-sm animate-pulse">
+              ⚙️ SENSOR CALIBRATION IN PROGRESS
+            </div>
+            <p className="text-xs text-gray-700 font-bold uppercase">
+              Please position your PID-1 reference sample under the sensor lens.
+            </p>
+            <div className="flex flex-col gap-2">
+              <div className="w-full bg-gray-200 border border-black h-4 overflow-hidden relative">
+                <div 
+                  className="bg-blue-600 h-full transition-all duration-300"
+                  style={{ width: `${calibrationProgress}%` }}
+                />
+                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-black mix-blend-difference font-mono">
+                  {calibrationProgress}%
+                </span>
+              </div>
+              <span className="text-[10px] text-gray-500 italic uppercase">
+                Calibrating RGB color channels...
+              </span>
+            </div>
           </div>
         </div>
       )}

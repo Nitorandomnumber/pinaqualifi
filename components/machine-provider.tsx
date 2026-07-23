@@ -53,6 +53,9 @@ interface MachineContextValue {
   sync: () => Promise<void>
   resetBatch: () => void
   reconnect: () => void
+  isCalibrating: boolean
+  calibrationProgress: number
+  startCalibration: () => void
 }
 
 const MachineContext = createContext<MachineContextValue | null>(null)
@@ -72,6 +75,8 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
   const [retryTrigger, setRetryTrigger] = useState(0)
   const [sensorCheck, setSensorCheck] = useState<SensorCheckResult | null>(null)
   const [scannerState, setScannerState] = useState<ScannerState>('idle')
+  const [isCalibrating, setIsCalibrating] = useState<boolean>(false)
+  const [calibrationProgress, setCalibrationProgress] = useState<number>(0)
 
   const wsRef = useRef<WebSocket | null>(null)
   const modeRef = useRef<Mode | null>(null)
@@ -156,6 +161,19 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
           if (check) {
             setSensorCheck(check)
             return
+          }
+
+          if (raw.startsWith("CALIB_PROGRESS|")) {
+            const pct = parseInt(raw.split("|")[1] ?? "0", 10);
+            setCalibrationProgress(pct);
+            setIsCalibrating(true);
+            return;
+          }
+
+          if (raw === "CALIB_DONE") {
+            setIsCalibrating(false);
+            setCalibrationProgress(100);
+            return;
           }
 
           // Check if it's a scanner state update
@@ -292,7 +310,13 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     setIsScanningHandheld(false)
     setScannerState('idle')
     setLastSyncCount(null)
+    setIsCalibrating(false)
+    setCalibrationProgress(0)
   }, [])
+
+  const startCalibration = useCallback(() => {
+    sendCommand('START_CALIBRATION')
+  }, [sendCommand])
 
   return (
     <MachineContext.Provider
@@ -321,6 +345,9 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
         sync,
         resetBatch,
         reconnect,
+        isCalibrating,
+        calibrationProgress,
+        startCalibration,
       }}
     >
       {children}
