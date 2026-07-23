@@ -6,7 +6,7 @@ import { DashboardHeader } from '@/components/dashboard-header'
 import { DashboardBody } from '@/components/dashboard-body'
 import { EndBatchButton } from '@/components/sync-button'
 import { useMachine } from '@/components/machine-provider'
-import { HANDHELD_PHASES } from '@/lib/machine'
+import { HANDHELD_PHASES, formatCleanliness, formatTexture } from '@/lib/machine'
 
 function HandheldPhases() {
   const { handheldPhase, isScanningHandheld } = useMachine()
@@ -103,7 +103,8 @@ export default function HandheldDashboard() {
     toggleScannerPause,
     isCalibrating,
     calibrationProgress,
-    startCalibration
+    startCalibration,
+    scan
   } = useMachine()
   const isConnected = connection === 'connected'
 
@@ -203,6 +204,32 @@ export default function HandheldDashboard() {
             <div className="bg-blue-600 text-white py-1 font-bold uppercase tracking-wider text-xs sm:text-sm animate-pulse">
               🔄 READY FOR NEXT FIBER SAMPLE
             </div>
+
+            {/* 📊 LATEST SCAN RESULT SUMMARY CARD */}
+            {scan.grade !== '----' && (
+              <div className="border border-black p-3 bg-gray-50 text-left flex flex-col gap-1 text-xs">
+                <span className="font-bold uppercase text-gray-500 text-[10px] tracking-wider mb-1 block">
+                  LATEST SCANNED RESULT:
+                </span>
+                <div className="flex justify-between border-b border-gray-200 py-0.5 font-mono">
+                  <span className="font-bold text-gray-700 font-sans">Grade:</span>
+                  <span className="text-blue-700 font-extrabold">{scan.grade}</span>
+                </div>
+                <div className="flex justify-between border-b border-gray-200 py-0.5 font-mono">
+                  <span className="font-bold text-gray-700 font-sans">Score:</span>
+                  <span>{scan.score}</span>
+                </div>
+                <div className="flex justify-between border-b border-gray-200 py-0.5 font-mono">
+                  <span className="font-bold text-gray-700 font-sans">Cleanliness:</span>
+                  <span>{formatCleanliness(scan.cleanliness)}</span>
+                </div>
+                <div className="flex justify-between py-0.5 font-mono">
+                  <span className="font-bold text-gray-700 font-sans">Texture:</span>
+                  <span>{formatTexture(scan.texture)}</span>
+                </div>
+              </div>
+            )}
+
             <p className="text-xs text-gray-700 font-bold uppercase">
               Please position the next fiber sample under the color sensor.
             </p>
