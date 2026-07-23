@@ -55,7 +55,7 @@ interface MachineContextValue {
   reconnect: () => void
   isCalibrating: boolean
   calibrationProgress: number
-  startCalibration: () => void
+  startCalibration: (target: string) => void
 }
 
 const MachineContext = createContext<MachineContextValue | null>(null)
@@ -314,8 +314,8 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
     setCalibrationProgress(0)
   }, [])
 
-  const startCalibration = useCallback(() => {
-    sendCommand('START_CALIBRATION')
+  const startCalibration = useCallback((target: string) => {
+    sendCommand('START_CALIBRATION|' + target)
   }, [sendCommand])
 
   return (
