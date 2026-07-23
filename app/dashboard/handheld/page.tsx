@@ -164,6 +164,29 @@ export default function HandheldDashboard() {
         </div>
       )}
 
+      {/* 🔄 READY FOR NEXT SAMPLE OVERLAY (BETWEEN SCANS) */}
+      {scannerState === 'scanning' && !isScanningHandheld && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm border-4 border-blue-600 bg-white p-6 shadow-2xl text-center flex flex-col gap-4 text-black">
+            <div className="bg-blue-600 text-white py-1 font-bold uppercase tracking-wider text-xs sm:text-sm animate-pulse">
+              🔄 READY FOR NEXT FIBER SAMPLE
+            </div>
+            <p className="text-xs text-gray-700 font-bold uppercase">
+              Please position the next fiber sample under the color sensor.
+            </p>
+            <div className="text-[10px] text-gray-500 italic uppercase">
+              Next scan will trigger automatically in a few seconds...
+            </div>
+            <button
+              onClick={toggleScannerPause}
+              className="w-full py-2 text-xs font-bold border-2 border-black bg-yellow-500 text-black hover:bg-yellow-600 uppercase tracking-wide"
+            >
+              [ Pause Scanner ]
+            </button>
+          </div>
+        </div>
+      )}
+
       <footer className="flex items-center gap-2 border-t border-black px-4 py-2 bg-white text-black">
         <IdentifierStatus />
         <div className="ml-auto flex-shrink-0">
