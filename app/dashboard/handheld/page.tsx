@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { ConsoleShell } from '@/components/console-shell'
 import { DashboardHeader } from '@/components/dashboard-header'
 import { DashboardBody } from '@/components/dashboard-body'
@@ -92,6 +93,7 @@ function IdentifierStatus() {
 }
 
 export default function HandheldDashboard() {
+  const [selectedTarget, setSelectedTarget] = useState<'PID1' | 'PID2' | 'PID3' | 'RESIDUAL'>('PID1')
   const { 
     triggerScan, 
     connection, 
@@ -112,21 +114,39 @@ export default function HandheldDashboard() {
         scanTitle="HANDHELD SCAN RESULT"
         scanFooter={
           <div className="flex flex-col gap-3">
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col gap-2">
               <button
                 onClick={triggerScan}
                 disabled={!isConnected || isCalibrating}
-                className="flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-green-700 text-white hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider"
+                className="w-full py-2.5 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-green-700 text-white hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider"
               >
                 [ Run Optical Scan Now ]
               </button>
-              <button
-                onClick={startCalibration}
-                disabled={!isConnected || scannerState === 'scanning' || isCalibrating}
-                className="flex-1 py-2.5 text-xs sm:text-sm font-bold uppercase border-2 border-black bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider"
-              >
-                [ Calibrate (60s) ]
-              </button>
+
+              <div className="flex flex-col gap-1.5 p-2 border border-black bg-gray-50 text-black">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-gray-700">
+                  Select Target to Calibrate (60s):
+                </span>
+                <div className="grid grid-cols-4 gap-1">
+                  {(['PID1', 'PID2', 'PID3', 'RESIDUAL'] as const).map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setSelectedTarget(t)}
+                      className={`py-1 text-[9px] sm:text-xs font-bold border transition-colors ${selectedTarget === t ? 'bg-black text-white border-black' : 'bg-white text-black border-gray-300 hover:bg-gray-100'}`}
+                    >
+                      {t === 'RESIDUAL' ? 'RESID' : t}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => startCalibration(selectedTarget)}
+                  disabled={!isConnected || scannerState === 'scanning' || isCalibrating}
+                  className="w-full py-2 text-xs font-bold uppercase border border-black bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed tracking-wider"
+                >
+                  [ Start Calibration for {selectedTarget} ]
+                </button>
+              </div>
             </div>
             <HandheldPhases />
           </div>
