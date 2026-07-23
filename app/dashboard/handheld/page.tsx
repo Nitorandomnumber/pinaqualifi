@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ConsoleShell } from '@/components/console-shell'
 import { DashboardHeader } from '@/components/dashboard-header'
 import { DashboardBody } from '@/components/dashboard-body'
-import { EndBatchButton } from '@/components/sync-button'
+import { ConsoleButton } from '@/components/console-button'
 import { useMachine } from '@/components/machine-provider'
 import { HANDHELD_PHASES, formatCleanliness, formatTexture } from '@/lib/machine'
 
@@ -93,7 +94,9 @@ function IdentifierStatus() {
 }
 
 export default function HandheldDashboard() {
+  const router = useRouter()
   const [selectedTarget, setSelectedTarget] = useState<'PID1' | 'PID2' | 'PID3' | 'RESIDUAL'>('PID1')
+  const [showRecords, setShowRecords] = useState(false)
   const { 
     triggerScan, 
     connection, 
@@ -104,7 +107,8 @@ export default function HandheldDashboard() {
     isCalibrating,
     calibrationProgress,
     startCalibration,
-    scan
+    scan,
+    scanHistory
   } = useMachine()
   const isConnected = connection === 'connected'
 
@@ -277,9 +281,83 @@ export default function HandheldDashboard() {
       <footer className="flex items-center gap-2 border-t border-black px-4 py-2 bg-white text-black">
         <IdentifierStatus />
         <div className="ml-auto flex-shrink-0">
-          <EndBatchButton />
+          <ConsoleButton 
+            variant="info" 
+            className="py-1 text-xs font-bold px-3 uppercase tracking-wider" 
+            onClick={() => setShowRecords(true)}
+          >
+            [ Batch Records ]
+          </ConsoleButton>
         </div>
       </footer>
+
+      {/* 📋 HIGH-VISIBILITY BATCH RECORDS OVERLAY */}
+      {showRecords && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-sm border-4 border-black bg-white p-6 shadow-2xl flex flex-col gap-4 text-black max-h-[85vh] overflow-y-auto">
+            <div className="bg-black text-white py-1 font-bold uppercase tracking-wider text-xs sm:text-sm text-center">
+              📋 CURRENT BATCH RECORDS
+            </div>
+            
+            {/* Recent Scans list */}
+            <div className="flex flex-col gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                Recent Scans (Current Session):
+              </span>
+              {scanHistory.length === 0 ? (
+                <div className="text-xs italic text-gray-500 border border-dashed border-gray-300 p-4 text-center">
+                  No samples scanned in this batch yet.
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5 max-h-[40vh] overflow-y-auto pr-1">
+                  {scanHistory.map((s, idx) => (
+                    <div 
+                      key={idx} 
+                      className="border border-black p-2 bg-gray-50 flex justify-between items-center text-xs font-mono"
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-sans font-bold text-gray-900">
+                          #{scanHistory.length - idx} - Grade: <span className="text-blue-700 font-extrabold">{s.grade}</span>
+                        </span>
+                        <span className="text-[10px] text-gray-500 font-sans">
+                          Clean: {formatCleanliness(s.cleanliness)} | Text: {formatTexture(s.texture)}
+                        </span>
+                      </div>
+                      <span className="font-bold text-right text-gray-700 bg-gray-200 px-1.5 py-0.5 rounded-sm">
+                        {s.score}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* End Batch controls */}
+            <div className="border-t border-black pt-3 flex flex-col gap-2">
+              <p className="text-[10px] text-gray-500 uppercase font-bold text-center">
+                Need to end the sorting batch and sync?
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowRecords(false)}
+                  className="flex-1 py-2 text-xs font-bold border-2 border-black bg-white text-black hover:bg-gray-100 uppercase"
+                >
+                  [ Resume ]
+                </button>
+                <button
+                  onClick={() => {
+                    setShowRecords(false)
+                    router.push('/batch-summary')
+                  }}
+                  className="flex-1 py-2 text-xs font-bold border-2 border-black bg-red-700 text-white hover:bg-red-800 uppercase"
+                >
+                  [ End Batch ]
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </ConsoleShell>
   )
 }

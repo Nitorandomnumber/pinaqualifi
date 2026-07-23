@@ -56,6 +56,7 @@ interface MachineContextValue {
   isCalibrating: boolean
   calibrationProgress: number
   startCalibration: (target: string) => void
+  scanHistory: ScanResult[]
 }
 
 const MachineContext = createContext<MachineContextValue | null>(null)
@@ -77,6 +78,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
   const [scannerState, setScannerState] = useState<ScannerState>('idle')
   const [isCalibrating, setIsCalibrating] = useState<boolean>(false)
   const [calibrationProgress, setCalibrationProgress] = useState<number>(0)
+  const [scanHistory, setScanHistory] = useState<ScanResult[]>([])
 
   const wsRef = useRef<WebSocket | null>(null)
   const modeRef = useRef<Mode | null>(null)
@@ -118,6 +120,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
 
   const applyScan = useCallback((result: ScanResult) => {
     setScan(result)
+    setScanHistory((prev) => [result, ...prev].slice(0, 10))
     setCounters((prev) => {
       const key = counterKeyForGrade(result.grade)
       return { ...prev, [key]: prev[key] + 1 }
@@ -304,6 +307,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
   const resetBatch = useCallback(() => {
     setCounters(EMPTY_COUNTERS)
     setScan(EMPTY_SCAN)
+    setScanHistory([])
     setConveyor('idle')
     setActivePhase(4)
     setHandheldPhase(0)
@@ -348,6 +352,7 @@ export function MachineProvider({ children }: { children: React.ReactNode }) {
         isCalibrating,
         calibrationProgress,
         startCalibration,
+        scanHistory,
       }}
     >
       {children}
